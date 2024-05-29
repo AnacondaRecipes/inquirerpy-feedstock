@@ -10,17 +10,17 @@ source:
   sha256: 89d2ada0111f337483cb41ae31073108b2ec1e618a49d7110b0d7ade89fc197e
 
 build:
-  noarch: python
-  script: {{ PYTHON }} -m pip install . -vv
   number: 0
+  skip: True # [py<3.7]
+  script: {{ PYTHON }} -m pip install . --no-deps --no-build-isolation -vv
 
 requirements:
   host:
-    - python >=3.7,<4.0
+    - python
     - pip
-    - poetry
+    - poetry-core
   run:
-    - python >=3.7,<4.0
+    - python
     - pfzy >=0.3.1,<0.4.0
     - prompt-toolkit >=3.0.1,<4.0.0
 
@@ -35,8 +35,17 @@ test:
 about:
   home: https://github.com/kazhala/InquirerPy
   summary: Python port of Inquirer.js (A collection of common interactive command-line user interfaces)
+  description: |
+    InquirerPy is a Python port of the famous Inquirer.js (A
+    collection of common interactive command line user
+    interfaces). This project is a re-implementation of the PyInquirer
+    project, with bug fixes of known issues, new prompts, backward
+    compatible APIs as well as more customisation options.
   license: MIT
   license_file: LICENSE
+  license_family: MIT
+  doc_url: https://inquirerpy.readthedocs.io/
+  dev_url: https://github.com/kazhala/InquirerPy
 
 extra:
   recipe-maintainers:

@@ -1,0 +1,6 @@
+upload_channels:
+  - sfe1ed40
+
+channels:
+  - https://staging.continuum.io/prefect/fs/pfzy-feedstock/pr1/6f89806
+
