@@ -6,8 +6,12 @@ package:
   version: {{ version }}
 
 source:
-  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/InquirerPy-{{ version }}.tar.gz
-  sha256: 89d2ada0111f337483cb41ae31073108b2ec1e618a49d7110b0d7ade89fc197e
+  - url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/InquirerPy-{{ version }}.tar.gz
+    sha256: 89d2ada0111f337483cb41ae31073108b2ec1e618a49d7110b0d7ade89fc197e
+  # no release of 0.3.4
+  - url: https://github.com/kazhala/InquirerPy/archive/refs/tags/0.3.4.tar.gz
+    sha256: 8fbc779350031786dc6273ce3153991f51c0bb30f3ad53890856a6685a082bdd
+    folder: _upstream
 
 build:
   number: 0
@@ -15,6 +19,8 @@ build:
   script: {{ PYTHON }} -m pip install . --no-deps --no-build-isolation -vv
 
 requirements:
+  build:
+    - git          # [not win]
   host:
     - python
     - pip
@@ -24,13 +30,42 @@ requirements:
     - pfzy >=0.3.1,<0.4.0
     - prompt-toolkit >=3.0.1,<4.0.0
 
+# The upstream .github/workflows/test.yml is:
+# poetry run python -m unittest discover
+#
+# (NB. no poetry on 3.12 at time of writing)
+#
+# However we get plagued with the likes of:
+# AttributeError: '_GeneratorContextManager' object has no attribute 'send_text'
+#
+# Which appears to be because self.inp has gone out of scope -- we
+# think because the search order changes.  What we have figured out is
+# that the top-level tests should go last and we can't run some of the
+# prompts tests.
+{% set tests_to_do = "" %}
+{% set tests_to_do = tests_to_do + " tests/base" %}
+{% set tests_to_do = tests_to_do + " tests/containers" %}
+{% set tests_to_do = tests_to_do + " tests/prompts" %}
+{% set tests_to_do = tests_to_do + " tests/test_*.py" %}
+
+{% set tests_to_ignore = "" %}
+{% set tests_to_ignore = tests_to_ignore + " --ignore=tests/prompts/test_input.py" %}
+{% set tests_to_ignore = tests_to_ignore + " --ignore=tests/prompts/test_confirm.py" %}
+{% set tests_to_ignore = tests_to_ignore + " --ignore=tests/prompts/test_filepath.py" %}
+{% set tests_to_ignore = tests_to_ignore + " --ignore=tests/prompts/test_secret.py" %}
+
 test:
+  source_files:
+    - _upstream
   imports:
     - InquirerPy
-  commands:
-    - pip check
   requires:
     - pip
+    - pytest
+  commands:
+    - pip check
+    - cd _upstream
+    - pytest -v {{ tests_to_do }} {{ tests_to_ignore }}
 
 about:
   home: https://github.com/kazhala/InquirerPy
