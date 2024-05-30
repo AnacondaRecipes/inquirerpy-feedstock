@@ -39,15 +39,29 @@ requirements:
 # AttributeError: '_GeneratorContextManager' object has no attribute 'send_text'
 #
 # Which appears to be because self.inp has gone out of scope -- we
-# think because the search order changes.  What we have figured out is
-# that the top-level tests should go last and we can't run some of the
-# prompts tests.
+# think because the order of tests changes.  What we have figured out
+# is that the top-level tests should go last and we can't run some of
+# the prompts tests regardless.
+#
+# The [not win] tests will generate:
+# from the CI or an ssh cmd.exe window:
+# prompt_toolkit.output.win32.NoConsoleScreenBufferError: Found
+# xterm-256color, while expecting a Windows console. Maybe try to run
+# this program using "winpty" or run it in cmd.exe instead. Or
+# otherwise, in case of Cygwin, use the Python executable that is
+# compiled for Cygwin.
+#
+# from an actual RDP cmd.exe window:
+# prompt_toolkit.output.win32.NoConsoleScreenBufferError: No Windows
+# console found. Are you running cmd.exe?
+
 {% set tests_to_do = "" %}
-{% set tests_to_do = tests_to_do + " tests/base" %}
+{% set tests_to_do = tests_to_do + " tests/base" %}                 # [not win]
+{% set tests_to_do = tests_to_do + " tests/base/test_control.py" %} # [win]
 {% set tests_to_do = tests_to_do + " tests/containers" %}
-{% set tests_to_do = tests_to_do + " tests/prompts" %}
+{% set tests_to_do = tests_to_do + " tests/prompts" %}              # [not win]
 {% set tests_to_do = tests_to_do + " tests/test_inquirer.py" %}
-{% set tests_to_do = tests_to_do + " tests/test_resolver.py" %}
+{% set tests_to_do = tests_to_do + " tests/test_resolver.py" %}     # [not win]
 {% set tests_to_do = tests_to_do + " tests/test_utils.py" %}
 {% set tests_to_do = tests_to_do + " tests/test_validator.py" %}
 
