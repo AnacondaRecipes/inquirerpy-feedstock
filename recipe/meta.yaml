@@ -8,14 +8,14 @@ package:
 source:
   - url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/InquirerPy-{{ version }}.tar.gz
     sha256: 89d2ada0111f337483cb41ae31073108b2ec1e618a49d7110b0d7ade89fc197e
-  # no release of 0.3.4
-  - url: https://github.com/kazhala/InquirerPy/archive/refs/tags/0.3.4.tar.gz
+  # no formal release of 0.3.4 but we want the tests
+  - url: https://github.com/kazhala/InquirerPy/archive/refs/tags/{{ version }}.tar.gz
     sha256: 8fbc779350031786dc6273ce3153991f51c0bb30f3ad53890856a6685a082bdd
     folder: _upstream
 
 build:
   number: 0
-  skip: True # [py<3.7]
+  skip: True       # [py<3.7]
   script: {{ PYTHON }} -m pip install . --no-deps --no-build-isolation -vv
 
 requirements:
@@ -46,7 +46,10 @@ requirements:
 {% set tests_to_do = tests_to_do + " tests/base" %}
 {% set tests_to_do = tests_to_do + " tests/containers" %}
 {% set tests_to_do = tests_to_do + " tests/prompts" %}
-{% set tests_to_do = tests_to_do + " tests/test_*.py" %}
+{% set tests_to_do = tests_to_do + " tests/test_inquirer.py" %}
+{% set tests_to_do = tests_to_do + " tests/test_resolver.py" %}
+{% set tests_to_do = tests_to_do + " tests/test_utils.py" %}
+{% set tests_to_do = tests_to_do + " tests/test_validator.py" %}
 
 {% set tests_to_ignore = "" %}
 {% set tests_to_ignore = tests_to_ignore + " --ignore=tests/prompts/test_input.py" %}
