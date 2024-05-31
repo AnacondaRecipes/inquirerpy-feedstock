@@ -6,37 +6,98 @@ package:
   version: {{ version }}
 
 source:
-  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/InquirerPy-{{ version }}.tar.gz
-  sha256: 89d2ada0111f337483cb41ae31073108b2ec1e618a49d7110b0d7ade89fc197e
+  - url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/InquirerPy-{{ version }}.tar.gz
+    sha256: 89d2ada0111f337483cb41ae31073108b2ec1e618a49d7110b0d7ade89fc197e
+  # no formal release of 0.3.4 but we want the tests
+  - url: https://github.com/kazhala/InquirerPy/archive/refs/tags/{{ version }}.tar.gz
+    sha256: 8fbc779350031786dc6273ce3153991f51c0bb30f3ad53890856a6685a082bdd
+    folder: _upstream
 
 build:
-  noarch: python
-  script: {{ PYTHON }} -m pip install . -vv
   number: 0
+  skip: True       # [py<3.7]
+  script: {{ PYTHON }} -m pip install . --no-deps --no-build-isolation -vv
 
 requirements:
+  build:
+    - git          # [not win]
   host:
-    - python >=3.7,<4.0
+    - python
     - pip
-    - poetry
+    - poetry-core
   run:
-    - python >=3.7,<4.0
+    - python
     - pfzy >=0.3.1,<0.4.0
     - prompt-toolkit >=3.0.1,<4.0.0
 
+# The upstream .github/workflows/test.yml is:
+# poetry run python -m unittest discover
+#
+# (NB. no poetry on 3.12 at time of writing)
+#
+# However we get plagued with the likes of:
+# AttributeError: '_GeneratorContextManager' object has no attribute 'send_text'
+#
+# Which appears to be because self.inp has gone out of scope -- we
+# think because the order of tests changes.  What we have figured out
+# is that the top-level tests should go last and we can't run some of
+# the prompts tests regardless.
+#
+# The [not win] tests will generate:
+# from the CI or an ssh cmd.exe window:
+# prompt_toolkit.output.win32.NoConsoleScreenBufferError: Found
+# xterm-256color, while expecting a Windows console. Maybe try to run
+# this program using "winpty" or run it in cmd.exe instead. Or
+# otherwise, in case of Cygwin, use the Python executable that is
+# compiled for Cygwin.
+#
+# from an actual RDP cmd.exe window:
+# prompt_toolkit.output.win32.NoConsoleScreenBufferError: No Windows
+# console found. Are you running cmd.exe?
+
+{% set tests_to_do = "" %}
+{% set tests_to_do = tests_to_do + " tests/base" %}                 # [not win]
+{% set tests_to_do = tests_to_do + " tests/base/test_control.py" %} # [win]
+{% set tests_to_do = tests_to_do + " tests/containers" %}
+{% set tests_to_do = tests_to_do + " tests/prompts" %}              # [not win]
+{% set tests_to_do = tests_to_do + " tests/test_inquirer.py" %}
+{% set tests_to_do = tests_to_do + " tests/test_resolver.py" %}     # [not win]
+{% set tests_to_do = tests_to_do + " tests/test_utils.py" %}
+{% set tests_to_do = tests_to_do + " tests/test_validator.py" %}
+
+{% set tests_to_ignore = "" %}
+{% set tests_to_ignore = tests_to_ignore + " --ignore=tests/prompts/test_input.py" %}
+{% set tests_to_ignore = tests_to_ignore + " --ignore=tests/prompts/test_confirm.py" %}
+{% set tests_to_ignore = tests_to_ignore + " --ignore=tests/prompts/test_filepath.py" %}
+{% set tests_to_ignore = tests_to_ignore + " --ignore=tests/prompts/test_secret.py" %}
+
 test:
+  source_files:
+    - _upstream
   imports:
     - InquirerPy
-  commands:
-    - pip check
   requires:
     - pip
+    - pytest
+  commands:
+    - pip check
+    - cd _upstream
+    - pytest -v {{ tests_to_do }} {{ tests_to_ignore }}
 
 about:
   home: https://github.com/kazhala/InquirerPy
   summary: Python port of Inquirer.js (A collection of common interactive command-line user interfaces)
+  description: |
+    InquirerPy is a Python port of the famous Inquirer.js (A
+    collection of common interactive command line user
+    interfaces). This project is a re-implementation of the PyInquirer
+    project, with bug fixes of known issues, new prompts, backward
+    compatible APIs as well as more customisation options.
   license: MIT
   license_file: LICENSE
+  license_family: MIT
+  doc_url: https://inquirerpy.readthedocs.io/
+  dev_url: https://github.com/kazhala/InquirerPy
 
 extra:
   recipe-maintainers:
